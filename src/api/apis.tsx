@@ -4,6 +4,10 @@ import { Employee, Payment, SalaryPaymentData, PaymentData } from '../types'; //
 import { NewPaymentRequest } from '../types';
 const API_URL =  "https://sdems.onrender.com/api"
 
+export const login = async (employeeId: string, password: string): Promise<{ user: Employee }> => {
+  const response = await axios.post(`${API_URL}/auth/login`, { employeeId, password });
+  return response.data;
+};
 
 // Get all employees
 export const getEmployees = async (): Promise<Employee[]> => {

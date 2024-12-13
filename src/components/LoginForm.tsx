@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import {login} from "../api/apis"
 import {useUser} from '../context/userContext';
 
 const loginSchema = z.object({
@@ -31,21 +31,22 @@ export default function LoginForm() {
   // Submit handler when form is submitted
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', data); // Send data to backend API
-      const { user } = response.data;
-
-      // Save the logged-in user to Zustand state
-      localStorage.setItem("user",JSON.stringify(user))
-      setUser(user);
-
-      // Navigate to home page (or dashboard)
+      const { user } = await login(data.employeeId, data.password);
+      localStorage.setItem("user", JSON.stringify(user));
+      const normalizedUser = {
+        ...user,
+        id: user.id || user._id || "", // Fallback to empty string if id is undefined
+      };
+  
+      setUser(normalizedUser);
       navigate('/dashboard');
     } catch (error: any) {
       const message =
         error.response?.data?.message || 'Invalid credentials. Please try again.';
-      setError('root', { message }); // Display error message in form
+      setError('root', { message });
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
