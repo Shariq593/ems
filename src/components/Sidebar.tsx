@@ -2,12 +2,12 @@ import React from 'react';
 import { LayoutDashboard, Users, FileBarChart, Menu, LogOut, Moon, Sun } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SidebarItem } from '../types';
-import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useUser } from '../context/userContext';
 
 const sidebarItems: SidebarItem[] = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['admin', 'employee'] },
-  { name: 'Employees', icon: Users, path: '/employees', roles: ['admin', ] },
+  { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['admin', 'employee'] },
+  { name: 'Employees', icon: Users, path: '/employees', roles: ['admin' ] },
   { name: 'Reports', icon: FileBarChart, path: '/reports', roles: ['admin', 'employee'] },
 ];
 
@@ -15,24 +15,16 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
   const location = useLocation();
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useThemeStore();
+  const {user, setUser } = useUser();
 
-  const user = localStorage.getItem('user')
-  console.log(user)
+
   const filteredItems = sidebarItems.filter(item => 
-    item.roles.includes(user?.role || 'employee')
+    user && item.roles.includes(user.role)
   );
 
-  const logout = () => {
-    // Remove JWT from localStorage (or cookies)
-    localStorage.removeItem("token");
-  
-    // Optionally, redirect to the login page
-    window.location.href = "/login";
-  };
-  
-
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem("user")
+    setUser(null);
     navigate('/login');
     onClose();
   };
@@ -84,7 +76,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="font-medium">{item.name}</span>
+                  <span className="font-medium">{item.name}</span>
               </Link>
             );
           })}

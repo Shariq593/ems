@@ -5,23 +5,30 @@ const Employee = require("../Model/Employee");
 
 const router = express.Router();
 
-const generateTokenAndSetCookie = (userId, res) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "15d", // Token will be valid for 15 days
-  });
 
-  // Set the token as an HTTP-only cookie
-  res.cookie("jwt", token, {
-    httpOnly: true, // This cookie cannot be accessed by JavaScript on the client-side
-    maxAge: 15 * 24 * 60 * 60 * 1000, // Cookie expiration time in milliseconds (15 days)
-    sameSite: "strict", // Prevent CSRF attacks
-  });
 
-  return token;
+// Middleware for Admin Access
+const adminMiddleware = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied. Admins only." });
+  }
+  next();
+};
+// Middleware to Authenticate Requests
+const authMiddleware = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Attach user info to the request
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
 };
 
-// JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET ;
+
 
 router.get("/employees", async (req, res) => {
   try {
@@ -36,6 +43,9 @@ router.get("/employees", async (req, res) => {
     // Return the list of employees
     res.status(200).json(employees);
   } catch (error) {
+
+
+    
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
@@ -58,11 +68,24 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid Employee ID or password" });
     }
 
-    // Generate the token and set it as an HTTP-only cookie
-    generateTokenAndSetCookie(employee._id, res);
+    const token = jwt.sign(
+      {id : employee._id, role: employee.role, employeeId : employee.employeeId },
+      process.env.JWT_SECRET,
+      {expiresIn : "8h"}
+    )
 
     // Return a success message without sending the token in the response body
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id : employee._id,
+        employeeId: employee.employeeId,
+        name: employee.name,
+        role: employee.role,
+      },
+      token,
+    });
+
 
   } catch (error) {
     console.error(error);
@@ -81,37 +104,6 @@ router.get('/user', authMiddleware, async (req, res) => {
 });
 
 
-// Middleware to Authenticate Requests
-const authMiddleware = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
-  if (!token) return res.status(401).json({ message: "No token provided" });
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // Attach user info to the request
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
-};
-
-// Middleware for Admin Access
-const adminMiddleware = (req, res, next) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied. Admins only." });
-  }
-  next();
-};
-const generteTokenAndSetCookie = (userId,res) =>{
-  const token = jwt.sign({userId},process.env.JWT_SECRET,{
-      expiresIn: '15d',
-  })
-  res.cookie("jwt",token, {
-      httpOnly: true, //this cookie cannot be accessed by browser
-      maxAge: 15*24*60*60*1000, //equals to 15 days
-      sameSite: "strict" // csrf "For security of the token"
-  })
-
-  return token;
 
 module.exports = { router, authMiddleware, adminMiddleware };

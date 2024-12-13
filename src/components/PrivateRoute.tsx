@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useUser } from '../context/userContext';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -8,15 +8,15 @@ interface PrivateRouteProps {
 }
 
 export default function PrivateRoute({ children, roles }: PrivateRouteProps) {
-  const { isAuthenticated, user } = useAuthStore();
+  const user = useUser()
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" />;
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/" />;
-  }
+  // if (roles && !roles.includes(user.role)) {
+  //   return <Navigate to="/dashboard" />;
+  // }
 
   return <>{children}</>;
 }

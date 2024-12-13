@@ -18,6 +18,16 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  type: {
+    type: String,
+    enum: ['salary', 'advance'], // Define acceptable types
+    required: true,
+  },
+  operation: {
+    type: String,
+    enum: ['plus', 'minus'], // Define acceptable operations
+    required: true,
+  },
 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

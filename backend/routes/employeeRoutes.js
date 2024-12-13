@@ -1,17 +1,40 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const Employee = require("../Model/Employee");
-const { authMiddleware, adminMiddleware } = require("./authRoutes");
-
+const express = require('express');
+const Employee = require('../Model/Employee');
+const bcrypt = require('bcryptjs');
 const router = express.Router();
 
-// Add Employee (Admin Only)
-router.post("/add", authMiddleware, adminMiddleware, async (req, res) => {
+// Get all employees
+router.get('/', async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    // Map _id to id for each employee
+    const mappedEmployees = employees.map((emp) => ({
+      ...emp.toObject(),
+      id: emp._id,
+    }));
+    res.json(mappedEmployees);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching employees' });
+  }
+});
+
+
+// Add an employee
+router.post('/', async (req, res) => {
   try {
     const { employeeId, password, name, monthlySalary, startDate, role } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const employee = await Employee.create({
+    // Validate required fields
+    if (!employeeId || !password || !name || !startDate) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create the employee
+    const newEmployee = new Employee({
       employeeId,
       password: hashedPassword,
       name,
@@ -20,37 +43,47 @@ router.post("/add", authMiddleware, adminMiddleware, async (req, res) => {
       role,
     });
 
-    res.status(201).json(employee);
+    const savedEmployee = await newEmployee.save();
+    res.status(201).json(savedEmployee);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error adding employee:', error);
+    res.status(500).json({ message: 'Error adding employee', error: error.message });
   }
 });
 
-// Update Employee
-router.put("/update/:id", authMiddleware, async (req, res) => {
+
+// Update an employee
+router.put('/:id', async (req, res) => {
   try {
-    const updatedEmployee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: 'Missing employee ID' });
+    }
+
+    const updatedEmployee = await Employee.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
     res.json(updatedEmployee);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error updating employee:', error);
+    res.status(500).json({ message: 'Error updating employee' });
   }
 });
 
-// Delete Employee (Admin Only)
-router.delete("/delete/:id", authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const employee = await Employee.findById(req.params.id);
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
-    }
-    if (employee.role === "admin") {
-      return res.status(403).json({ message: "Cannot delete an admin." });
-    }
 
-    await employee.remove();
-    res.json({ message: "Employee deleted." });
+// Delete an employee
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
+    if (!deletedEmployee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.status(204).end(); // No content
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error deleting employee:', error);
+    res.status(500).json({ message: 'Error deleting employee' });
   }
 });
 

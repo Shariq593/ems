@@ -1,10 +1,8 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useAuthStore } from '../store/authStore';
-import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {useUser} from '../context/userContext';
 
 const loginSchema = z.object({
   employeeId: z.string().min(1, 'Employee ID is required'),
@@ -27,7 +25,7 @@ export default function LoginForm() {
     },
   });
 
-  const login = useAuthStore((state) => state.login); // Zustand store method to handle login
+  const {setUser} =useUser()
   const navigate = useNavigate(); // React Router to navigate between pages
 
   // Submit handler when form is submitted
@@ -38,9 +36,10 @@ export default function LoginForm() {
 
       // Save the logged-in user to Zustand state
       localStorage.setItem("user",JSON.stringify(user))
+      setUser(user);
 
       // Navigate to home page (or dashboard)
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       const message =
         error.response?.data?.message || 'Invalid credentials. Please try again.';

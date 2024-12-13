@@ -20,7 +20,7 @@ export const calculateSalaryForPeriod = (
 };
 
 export const calculatePaidSalaryForPeriod = (
-  payments: Payment[],
+  payments: Payment[], // Use the Payment type
   employeeId: string,
   dateRange: DateRange
 ): number => {
@@ -28,12 +28,13 @@ export const calculatePaidSalaryForPeriod = (
     .filter(
       (payment) =>
         payment.employeeId === employeeId &&
-        payment.type === 'salary' &&
+        payment.type === "salary" &&
         payment.date >= dateRange.start &&
         payment.date <= dateRange.end
     )
     .reduce((sum, payment) => sum + payment.amount, 0);
 };
+
 
 export const calculateTotalDays = (dateRange: DateRange): number => {
   const start = parseISO(dateRange.start);

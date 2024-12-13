@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
+import { addPayment } from '../api/apis'; // API function to add payment
+import { NewPaymentRequest, Employee } from '../types';
+
+
 
 const paymentSchema = z.object({
   employeeId: z.string().min(1, 'Employee is required'),
@@ -15,12 +17,11 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 
 interface PaymentFormProps {
   onClose: () => void;
+  employees: Employee[]; // Pass the employee list from the parent component
+  onPaymentAdded: () => void; // Callback to refresh the payment list or state
 }
 
-export default function PaymentForm({ onClose }: PaymentFormProps) {
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+export default function PaymentForm({ onClose, employees, onPaymentAdded }: PaymentFormProps) {
   const {
     register,
     handleSubmit,
@@ -33,34 +34,27 @@ export default function PaymentForm({ onClose }: PaymentFormProps) {
     },
   });
 
-  // Fetch employees from the backend
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const response = await axios.get('/api/employees');
-        setEmployees(response.data); // Assume the API returns an array of employees
-      } catch (error) {
-        console.error('Error fetching employees:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEmployees();
-  }, []);
 
   const onSubmit = async (data: PaymentFormData) => {
     try {
-      await axios.post('/api/payments/add', data);
-      alert('Payment added successfully!');
+      const paymentRequest: NewPaymentRequest = {
+        employeeId: data.employeeId,
+        date: data.date,
+        amount: data.amount,
+        description: data.note, // Map note to description
+        type: 'salary', // Example type
+        operation: 'plus', // Example operation
+      };
+  
+      await addPayment(paymentRequest);
+      onPaymentAdded();
       onClose();
     } catch (error) {
       console.error('Error adding payment:', error);
-      alert('Failed to add payment.');
     }
   };
+  
 
-  if (loading) return <p>Loading...</p>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -75,9 +69,9 @@ export default function PaymentForm({ onClose }: PaymentFormProps) {
         >
           <option value="">Select an employee</option>
           {employees
-            .filter((emp: any) => emp.role !== 'admin')
-            .map((employee: any) => (
-              <option key={employee._id} value={employee._id}>
+            .filter((emp) => emp.role !== 'admin')
+            .map((employee) => (
+              <option key={employee.id} value={employee.id}>
                 {employee.name}
               </option>
             ))}
@@ -87,7 +81,6 @@ export default function PaymentForm({ onClose }: PaymentFormProps) {
         )}
       </div>
 
-      {/* Other form fields (date, amount, note) remain unchanged */}
       <div>
         <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
           Date

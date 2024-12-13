@@ -1,26 +1,131 @@
 const express = require('express');
-const Payment = require('../Model/Payment');
-
+const Payment = require('../Model/Payment'); // Payment model
 const router = express.Router();
 
-// Add Payment
-router.post('/add', async (req, res) => {
+// Add a payment
+router.post('/', async (req, res) => {
+  console.log("REq.body", req.body);
+
+  const { employeeId, amount, date, description, type, operation } = req.body;
+
   try {
-    const payment = await Payment.create(req.body);
-    res.status(201).json(payment);
+    // Validate required fields
+    if (!employeeId || !amount || !date || !type || !operation) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Create the Payment object
+    const payment = new Payment({
+      employeeId,
+      amount,
+      date,
+      description,
+      type,
+      operation,
+    });
+
+    console.log("payment", payment);
+
+    // Save the payment in the database
+    const savedPayment = await payment.save();
+    console.log("savedPayment", savedPayment);
+
+    res.status(201).json(savedPayment);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error in adding payment:", error);
+    res.status(500).json({ message: 'Error adding payment', error });
   }
 });
 
-// Delete Payment
-router.delete('/delete/:id', async (req, res) => {
+
+// Get all payments
+router.get('/', async (req, res) => {
   try {
-    await Payment.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Payment deleted.' });
+    const payments = await Payment.find();
+    res.status(200).json(payments);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ message: 'Error fetching payments', error });
+  }
+});
+
+router.post('/advance', async (req, res) => {
+  const { employeeId, date, amount, note, operation } = req.body;
+
+  try {
+    // Validate required fields
+    if (!employeeId || !amount || !date || !operation) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Create a new advance payment
+    const advancePayment = new Payment({
+      employeeId,
+      amount,
+      date,
+      description: note,
+      type: 'advance',
+      operation,
+    });
+
+    // Save the payment in the database
+    const savedPayment = await advancePayment.save();
+    res.status(201).json(savedPayment);
+  } catch (error) {
+    console.error('Error adding advance payment:', error);
+    res.status(500).json({ message: 'Error adding advance payment', error });
+  }
+});
+
+// Pay salary
+router.post('/salary', async (req, res) => {
+  const { employeeId, date, amount, note } = req.body;
+
+  try {
+    // Validate required fields
+    if (!employeeId || !amount || !date) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Create a new salary payment
+    const salaryPayment = new Payment({
+      employeeId,
+      amount,
+      date,
+      description: note,
+      type: 'salary',
+      operation: 'plus',
+    });
+
+    // Save to the database
+    const savedPayment = await salaryPayment.save();
+    res.status(201).json(savedPayment);
+  } catch (error) {
+    console.error('Error processing salary payment:', error);
+    res.status(500).json({ message: 'Error processing salary payment', error });
+  }
+});
+
+
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: 'Payment ID is required' });
+  }
+
+  try {
+    const deletedPayment = await Payment.findByIdAndDelete(id);
+    if (!deletedPayment) {
+      return res.status(403).json({ message: 'Payment not found' });
+    }
+
+    res.status(200).json({ message: 'Payment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    res.status(500).json({ message: 'Server error', error });
   }
 });
 
 module.exports = router;
+
+

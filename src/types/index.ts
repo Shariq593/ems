@@ -1,5 +1,6 @@
 export interface Employee {
-  id: string;
+  _id : string;
+  id?: string;
   employeeId: string;
   password: string;
   name: string;
@@ -9,6 +10,7 @@ export interface Employee {
 }
 
 export interface Payment {
+  _id? : string;
   id: string;
   employeeId: string;
   date: string;
@@ -33,4 +35,39 @@ export interface AuthState {
 export interface DateRange {
   start: string;
   end: string;
+}
+
+export interface User {
+  id: string;
+  employeeId: string;
+  role: "admin" | "employee";
+
+}
+
+export interface PaymentFormData {
+  employeeId: string;
+  date: string;
+  amount: number;
+  description: string;
+}
+
+export interface NewPaymentRequest extends PaymentFormData {
+  type: 'salary' | 'advance';
+  operation: 'plus' | 'minus';
+}
+
+export interface PaymentData {
+  employeeId: string;
+  date: string;
+  amount: number;
+  note: string;
+  operation: 'plus' | 'minus';
+  type: string; // For advance payments, this will be "advance"
+}
+
+export interface SalaryPaymentData {
+  employeeId: string;
+  date: string;
+  amount: number;
+  note: string;
 }

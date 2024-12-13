@@ -2,7 +2,8 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEmployeeStore } from '../store/employeeStore';
+import { addAdvancePayment } from '../api/apis'; // API call for advance payment
+import {  PaymentData } from '../types'; // Ensure the path is correct
 
 const advanceSchema = z.object({
   employeeId: z.string().min(1, 'Employee is required'),
@@ -16,11 +17,13 @@ type AdvanceFormData = z.infer<typeof advanceSchema>;
 
 interface AdvancePaymentFormProps {
   onClose: () => void;
+  employees: { id: string; name: string; role: string }[]; // List of employees
 }
 
-export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps) {
-  const { employees, addPayment } = useEmployeeStore();
-
+export default function AdvancePaymentForm({
+  onClose,
+  employees,
+}: AdvancePaymentFormProps) {
   const {
     register,
     handleSubmit,
@@ -34,18 +37,29 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
     },
   });
 
-  const onSubmit = (data: AdvanceFormData) => {
-    addPayment({
-      ...data,
-      type: 'advance',
-    });
-    onClose();
+  const onSubmit = async (data: AdvanceFormData) => {
+    try {
+      const paymentData: PaymentData = {
+        ...data,
+        type: 'advance', // Add the type explicitly
+      };
+      await addAdvancePayment(paymentData);
+      alert('Advance payment added successfully!');
+      onClose();
+    } catch (error) {
+      console.error('Error adding advance payment:', error);
+      alert('Failed to add advance payment');
+    }
   };
+  
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="employeeId"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
           Employee
         </label>
         <select
@@ -54,11 +68,13 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         >
           <option value="">Select an employee</option>
-          {employees.filter(emp => emp.role !== 'admin').map((employee) => (
-            <option key={employee.id} value={employee.id}>
-              {employee.name}
-            </option>
-          ))}
+          {employees
+            .filter((emp) => emp.role !== 'admin') // Exclude admin users
+            .map((employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.name}
+              </option>
+            ))}
         </select>
         {errors.employeeId && (
           <p className="mt-1 text-sm text-red-600">{errors.employeeId.message}</p>
@@ -66,7 +82,10 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
       </div>
 
       <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="date"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
           Date
         </label>
         <input
@@ -81,7 +100,10 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
       </div>
 
       <div>
-        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="amount"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
           Amount
         </label>
         <input
@@ -97,7 +119,9 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Operation</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+          Operation
+        </label>
         <div className="mt-2 space-x-4">
           <label className="inline-flex items-center">
             <input
@@ -124,7 +148,10 @@ export default function AdvancePaymentForm({ onClose }: AdvancePaymentFormProps)
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="note"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
           Note
         </label>
         <textarea
