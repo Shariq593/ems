@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const Payment = require('./Payment'); 
 const employeeSchema = new mongoose.Schema(
   {
     employeeId: {
