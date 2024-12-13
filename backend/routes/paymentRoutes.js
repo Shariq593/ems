@@ -48,33 +48,39 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/advance', async (req, res) => {
-  const { employeeId, date, amount, note, operation } = req.body;
+router.post("/advance", async (req, res) => {
+  const { employeeId, amount, date, note } = req.body;
 
   try {
-    // Validate required fields
-    if (!employeeId || !amount || !date || !operation) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Validate employeeId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({ message: "Invalid employee ID format" });
     }
 
-    // Create a new advance payment
-    const advancePayment = new Payment({
+    // Check if the employee exists
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // Create and save the payment
+    const newPayment = new Payment({
       employeeId,
       amount,
       date,
-      description: note,
-      type: 'advance',
-      operation,
+      note,
+      type: "advance",
+      operation: "minus",
     });
 
-    // Save the payment in the database
-    const savedPayment = await advancePayment.save();
-    res.status(201).json(savedPayment);
+    await newPayment.save();
+    res.status(201).json({ message: "Advance payment added successfully", payment: newPayment });
   } catch (error) {
-    console.error('Error adding advance payment:', error);
-    res.status(500).json({ message: 'Error adding advance payment', error });
+    console.error("Error adding advance payment:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 });
+
 
 // Pay salary
 router.post('/salary', async (req, res) => {
