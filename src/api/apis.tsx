@@ -1,7 +1,9 @@
+
 import axios from 'axios';
 import { Employee, Payment, SalaryPaymentData, PaymentData } from '../types'; // Ensure the path is correct
 import { NewPaymentRequest } from '../types';
-const API_URL = 'http://localhost:3000/api';
+const API_URL =  "https://sdems.onrender.com/api"
+
 
 // Get all employees
 export const getEmployees = async (): Promise<Employee[]> => {
