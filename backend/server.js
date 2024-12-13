@@ -16,7 +16,8 @@ const allowedOrigins = [
   'http://localhost:5173', // Local development
   'https://sd-ems.netlify.app' // Deployed frontend
 ];
-
+app.use(express.json()); // This parses incoming JSON payloads
+app.use(express.urlencoded({ extended: true })); 
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {

@@ -53,6 +53,7 @@ router.get("/employees", async (req, res) => {
 
 
 router.post("/login", async (req, res) => {
+  console.log(req.body)
   const { employeeId, password } = req.body;
 
   try {
