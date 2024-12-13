@@ -19,16 +19,19 @@ const allowedOrigins = [
 app.use(express.json()); // This parses incoming JSON payloads
 app.use(express.urlencoded({ extended: true })); 
 // Middleware
+
 app.use(cors({
   origin: (origin, callback) => {
+    console.log("Incoming request origin:", origin); // Log the origin for debugging
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true); // Allow the request
     } else {
+      console.error("Blocked by CORS:", origin);
       callback(new Error('Not allowed by CORS')); // Deny the request
     }
   },
   methods: 'GET,POST,PUT,DELETE', // Allowed HTTP methods
-  credentials: true, // Allow credentials (cookies, authorization headers)
+  credentials: true, // Allow cookies and credentials
   allowedHeaders: 'Content-Type, Authorization', // Allowed headers
 }));
 
