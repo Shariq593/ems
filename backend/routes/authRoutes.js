@@ -54,7 +54,7 @@ router.get("/employees", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { employeeId, password } = req.body;
-  console.log("Login request received", req.body); // Log request body
+
   try {
     // Find the employee by ID
     const employee = await Employee.findOne({ employeeId });
