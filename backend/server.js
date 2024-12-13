@@ -12,13 +12,25 @@ const port = 3000;
 
 connectDB();
 
+const allowedOrigins = [
+  'http://localhost:5173', // Local development
+  'https://sd-ems.netlify.app' // Deployed frontend
+];
+
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow only the frontend URL
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true); // Allow the request
+    } else {
+      callback(new Error('Not allowed by CORS')); // Deny the request
+    }
+  },
   methods: 'GET,POST,PUT,DELETE', // Allowed HTTP methods
-  allowedHeaders: 'Content-Type, Authorization' // Allowed headers
+  credentials: true, // Allow credentials (cookies, authorization headers)
+  allowedHeaders: 'Content-Type, Authorization', // Allowed headers
 }));
-app.use(express.json());
+
 
 // Routes
 app.use("/api/auth", authRoutes); // Use the fixed router import
