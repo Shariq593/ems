@@ -107,6 +107,7 @@ export default function Reports() {
   };
 
   const handleViewPayment = (payment: PaymentDetails) => {
+    console.log(payment)
     setSelectedPayment(payment);
   };
 
@@ -283,8 +284,8 @@ export default function Reports() {
                       {formatCurrency(payment.amount)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                      {payment.note
-                        ? payment.note.split("\n")[0]
+                      {payment.description
+                        ? payment.description.split("\n")[0]
                         : "No notes available"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Calculator, Trash2, Eye, Edit, IndianRupee } from "lucide-react";
+
 import Modal from "../components/Modal";
 import { formatCurrency } from "../utils/currency";
 import { formatDate } from "../utils/date";
@@ -367,6 +368,16 @@ useEffect(() => {
                 {formatDate(selectedEmployee.startDate)}
               </p>
             </div>
+            {isAdmin &&
+            (<div>
+              <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
+                Password
+              </label>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                {selectedEmployee.password}
+              </p>
+            </div>)
+            }
           </div>
         )}
       </Modal>

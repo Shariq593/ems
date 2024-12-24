@@ -15,7 +15,7 @@ export interface Payment {
   employeeId: string;
   date: string;
   amount: number;
-  note: string;
+  description: string;
   type: 'salary' | 'advance';
   operation: 'plus' | 'minus';
 }

@@ -1,12 +1,14 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Payment = require('../Model/Payment'); // Payment model
+const Employee = require('../Model/Employee'); // Employee model
 const router = express.Router();
 
-// Add a payment
+// Add a payment (with optional attendance)
 router.post('/', async (req, res) => {
-  console.log("REq.body", req.body);
+  console.log("Request Body:", req.body);
 
-  const { employeeId, amount, date, description, type, operation } = req.body;
+  const { employeeId, amount, date, description, type, operation, attendance } = req.body;
 
   try {
     // Validate required fields
@@ -22,14 +24,13 @@ router.post('/', async (req, res) => {
       description,
       type,
       operation,
+      ...(attendance && { attendance }) // Conditionally add attendance
     });
 
-    console.log("payment", payment);
+    console.log("New Payment:", payment);
 
-    // Save the payment in the database
+    // Save the payment
     const savedPayment = await payment.save();
-    console.log("savedPayment", savedPayment);
-
     res.status(201).json(savedPayment);
   } catch (error) {
     console.error("Error in adding payment:", error);
@@ -37,17 +38,39 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Pay salary (with optional attendance)
+router.post('/salary', async (req, res) => {
+  const { employeeId, date, amount, note, attendance } = req.body;
 
-// Get all payments
-router.get('/', async (req, res) => {
   try {
-    const payments = await Payment.find();
-    res.status(200).json(payments);
+    // Validate required fields
+    if (!employeeId || !amount || !date) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Create a salary payment object
+    const salaryPayment = new Payment({
+      employeeId,
+      amount,
+      date,
+      description: note,
+      type: 'salary',
+      operation: 'plus',
+      ...(attendance && { attendance }) // Add attendance details conditionally
+    });
+
+    console.log("Salary Payment:", salaryPayment);
+
+    // Save the payment
+    const savedPayment = await salaryPayment.save();
+    res.status(201).json(savedPayment);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching payments', error });
+    console.error('Error processing salary payment:', error);
+    res.status(500).json({ message: 'Error processing salary payment', error });
   }
 });
 
+// Add advance payment
 router.post("/advance", async (req, res) => {
   const { employeeId, amount, date, note } = req.body;
 
@@ -68,10 +91,12 @@ router.post("/advance", async (req, res) => {
       employeeId,
       amount,
       date,
-      note,
+      description: note,
       type: "advance",
       operation: "minus",
     });
+
+    console.log("Advance Payment:", newPayment);
 
     await newPayment.save();
     res.status(201).json({ message: "Advance payment added successfully", payment: newPayment });
@@ -81,37 +106,18 @@ router.post("/advance", async (req, res) => {
   }
 });
 
-
-// Pay salary
-router.post('/salary', async (req, res) => {
-  const { employeeId, date, amount, note } = req.body;
-
+// Get all payments
+router.get('/', async (req, res) => {
   try {
-    // Validate required fields
-    if (!employeeId || !amount || !date) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    // Create a new salary payment
-    const salaryPayment = new Payment({
-      employeeId,
-      amount,
-      date,
-      description: note,
-      type: 'salary',
-      operation: 'plus',
-    });
-
-    // Save to the database
-    const savedPayment = await salaryPayment.save();
-    res.status(201).json(savedPayment);
+    const payments = await Payment.find().populate('employeeId', 'name'); // Populate employee name
+    res.status(200).json(payments);
   } catch (error) {
-    console.error('Error processing salary payment:', error);
-    res.status(500).json({ message: 'Error processing salary payment', error });
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ message: 'Error fetching payments', error });
   }
 });
 
-
+// Delete a payment by ID
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -122,16 +128,16 @@ router.delete('/:id', async (req, res) => {
   try {
     const deletedPayment = await Payment.findByIdAndDelete(id);
     if (!deletedPayment) {
-      return res.status(403).json({ message: 'Payment not found' });
+      return res.status(404).json({ message: 'Payment not found' });
     }
+
+    console.log("Deleted Payment:", deletedPayment);
 
     res.status(200).json({ message: 'Payment deleted successfully' });
   } catch (error) {
     console.error('Error deleting payment:', error);
     res.status(500).json({ message: 'Server error', error });
   }
-});
+}); 
 
 module.exports = router;
-
-
