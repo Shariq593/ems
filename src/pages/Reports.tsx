@@ -74,12 +74,15 @@ export default function Reports() {
 
   // Add employeeName to payments for display
   const enrichedPayments = filteredPayments.map((payment) => {
-    const employee = employees.find((emp) => emp.id === payment.employeeId);
+    
+    const employee = employees.find((emp) => emp.id === payment.employeeId._id);
+
     return {
       ...payment,
       employeeName: employee ? employee.name : "Unknown",
     };
   });
+  console.log("enriched",enrichedPayments)
 
   const totalAdvanceDeduction = enrichedPayments
     .filter((p) => p.type === "advance")
